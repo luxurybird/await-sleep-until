@@ -1,13 +1,21 @@
 {
   "name": "await-sleep-until",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "A smarter sleep for async code: await until time, condition, or event",
   "keywords": [
     "sleep",
     "await",
     "timer",
     "delay",
-    "async"
+    "async",
+    "await-sleep-until",
+    "await-sleep",
+    "sleep-until",
+    "wait-until",
+    "wait"
   ],
   "license": "MIT",
   "author": "luxurybird",
