@@ -8,12 +8,11 @@ dependency-free package.
 
 ## ✨ Features
 
-- `sleep.for(ms)` -- classic delay\
-- `sleep.until(condition, options?)` -- wait until a function becomes
-  true\
-- `sleep.at(date)` -- wait until a specific time in the future\
-- Fully typed TypeScript API\
-- No dependencies\
+- `sleep.for(ms)` -- classic delay
+- `sleep.until(condition, options?)` -- wait until a function becomes true
+- `sleep.at(date)` -- wait until a specific time in the future
+- Fully typed TypeScript API
+- No dependencies
 - Works in Node.js, Bun, and Browsers
 
 ---
@@ -31,7 +30,7 @@ or
 ## 🚀 Quick Start
 
 ```ts
-import sleep from "await-sleep-until";
+import { sleep } from "await-sleep-until";
 ```
 
 ### Wait for a delay
@@ -60,13 +59,13 @@ console.log("Happy New Year!");
 
 ## ⚙️ API
 
-### **sleep.for(ms: number): Promise`<void>`{=html}**
+### **sleep.for(ms: number): Promise`<void>`**
 
 Waits the given milliseconds.
 
 ---
 
-### **sleep.until(fn, options?): Promise`<void>`{=html}**
+### **sleep.until(fn, options?): Promise`<void>`**
 
 #### Parameters
 

@@ -49,5 +49,3 @@ export const sleep = {
   until: sleepUntil,
   at: sleepAt,
 };
-
-export default sleep;
