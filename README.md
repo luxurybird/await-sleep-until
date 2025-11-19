@@ -125,4 +125,4 @@ Automatically on every push and pull request.
 
 ## 📜 License
 
-MIT © YOU
+MIT © luxurybird
