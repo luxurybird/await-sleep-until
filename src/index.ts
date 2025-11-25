@@ -25,7 +25,7 @@ export async function sleepUntil<T = unknown>(
   const signal = options.signal;
   const backoff = options.backoff;
 
-  const start = performance.now();
+  const start = Date.now();
   let attempt = 0;
 
   return new Promise<T>(async (resolve, reject) => {
@@ -42,12 +42,12 @@ export async function sleepUntil<T = unknown>(
           return resolve(value);
         }
 
-        const elapsed = performance.now() - start;
+        const elapsed = Date.now() - start;
         if (elapsed >= timeout) {
           return reject(new SleepTimeoutError());
         }
 
-        const wait = backoff ? backoff(attempt++) : interval;
+        const wait = backoff ? Math.max(0, backoff(attempt++)) : interval;
 
         await sleepFor(wait);
       }
