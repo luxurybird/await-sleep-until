@@ -37,7 +37,7 @@ export async function sleepUntil<T = unknown>(
     try {
       while (true) {
         const value = await condition();
-        if (value !== false) {
+        if (value !== false && value !== undefined && value !== null) {
           signal?.removeEventListener('abort', abortHandler);
           return resolve(value);
         }
