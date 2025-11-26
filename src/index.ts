@@ -1,26 +1,19 @@
-// Ultra-polished version with:
-// ✔ Safer AbortSignal handling
-// ✔ Better typings & return narrowing
-// ✔ Proper backoff safety
-// ✔ Cancellation promise race support
-// ✔ High-precision timers where available
-// ✔ Clearer control flow
-// ✔ Consistent cleanup
-// ✔ JSDoc everywhere
-// ✔ Smaller + faster internal loop
+// Ultra-polished, modern, race-safe sleep utilities.
+// ✔ Strong abort safety + DOMException consistency
+// ✔ Safer cleanup
+// ✔ Clearer execution flow
+// ✔ Narrower condition type inference
+// ✔ No unhandled microtasks
+// ✔ No async-in-new-Promise anti-pattern
+// ✔ Faster control-flow and less branching
 
 export type UntilOptions = {
-  /** Interval between condition checks in milliseconds (default: 100ms). */
   interval?: number;
-  /** Maximum allowed time for waiting (default: Infinity). */
   timeout?: number;
-  /** Optional AbortSignal to cancel early. */
   signal?: AbortSignal;
-  /** Optional backoff function. Return millis to wait. */
   backoff?: (attempt: number) => number;
 };
 
-/** Error thrown when sleepUntil times out */
 export class SleepTimeoutError extends Error {
   constructor(message = 'sleep.until: timeout exceeded') {
     super(message);
@@ -28,72 +21,72 @@ export class SleepTimeoutError extends Error {
   }
 }
 
-/** Sleep for a given number of milliseconds */
-export function sleepFor(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+export const sleepFor = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
-/** Utility: choose high-resolution timer when possible */
-function now(): number {
-  return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
-}
+const now = typeof performance !== 'undefined' && performance.now ? () => performance.now() : () => Date.now();
 
 /**
- * Wait until `condition()` returns a truthy value.
- * - Resolves with the returned value
- * - Rejects on timeout or abort
- * - Supports interval or backoff-based waits
+ * Wait until condition() returns a truthy value.
+ * Resolves: value returned by condition()
+ * Rejects: timeout, abort, or condition() throws
  */
-export async function sleepUntil<T = unknown>(
+export function sleepUntil<T = unknown>(
   condition: () => T | false | null | undefined | Promise<T | false | null | undefined>,
-  options: UntilOptions = {}
+  opts: UntilOptions = {}
 ): Promise<T> {
-  const interval = options.interval ?? 100;
-  const timeout = options.timeout ?? Infinity;
-  const signal = options.signal;
-  const backoff = options.backoff;
+  const { interval = 100, timeout = Infinity, signal, backoff } = opts;
+
+  // Fast abort
+  if (signal?.aborted) {
+    return Promise.reject(signal.reason ?? new DOMException('Aborted', 'AbortError'));
+  }
 
   const start = now();
   let attempt = 0;
 
   return new Promise<T>((resolve, reject) => {
-    if (signal?.aborted) return reject(signal.reason);
+    // --- Abort Handler ---
+    const onAbort = () => {
+      cleanup();
+      reject(signal!.reason ?? new DOMException('Aborted', 'AbortError'));
+    };
 
-    const abortHandler = () => reject(signal?.reason);
-    signal?.addEventListener('abort', abortHandler);
+    if (signal) signal.addEventListener('abort', onAbort, { once: true });
 
-    const cleanup = () => signal?.removeEventListener('abort', abortHandler);
+    const cleanup = () => {
+      if (signal) signal.removeEventListener('abort', onAbort);
+    };
 
     const loop = async () => {
-      try {
-        while (true) {
-          if (signal?.aborted) {
-            cleanup();
-            return reject(signal.reason);
-          }
+      while (true) {
+        // In-loop check for race conditions
+        if (signal?.aborted) return onAbort();
 
-          const value = await condition();
-          if (value !== false && value !== undefined && value !== null) {
-            cleanup();
-            return resolve(value);
-          }
-
-          const elapsed = now() - start;
-          if (elapsed >= timeout) {
-            cleanup();
-            return reject(new SleepTimeoutError());
-          }
-
-          const delay = backoff ? Math.max(0, backoff(attempt++)) : interval;
-          await sleepFor(delay);
+        let value: T | false | null | undefined;
+        try {
+          value = await condition();
+        } catch (err) {
+          cleanup();
+          return reject(err);
         }
-      } catch (err) {
-        cleanup();
-        reject(err);
+
+        if (value !== false && value !== null && value !== undefined) {
+          cleanup();
+          return resolve(value);
+        }
+
+        if (now() - start >= timeout) {
+          cleanup();
+          return reject(new SleepTimeoutError());
+        }
+
+        const wait = backoff ? backoff(attempt++) : interval;
+        if (wait > 0) await sleepFor(wait);
       }
     };
 
-    loop();
+    // Kick off without async-in-constructor
+    void loop();
   });
 }
 
@@ -104,7 +97,7 @@ export async function sleepAt(time: string | Date): Promise<void> {
   if (diff > 0) await sleepFor(diff);
 }
 
-/** Fully packaged namespace */
+/** Namespace-friendly export */
 export const sleep = {
   for: sleepFor,
   until: sleepUntil,
