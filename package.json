@@ -1,10 +1,10 @@
 {
   "name": "await-sleep-until",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "publishConfig": {
     "access": "public"
   },
-  "description": "A smarter sleep for async code: await until time, condition, or event",
+  "description": "A comprehensive async utility library: sleep, retry, debounce, throttle, and more for modern JavaScript/TypeScript",
   "keywords": [
     "sleep",
     "await",
@@ -15,12 +15,41 @@
     "await-sleep",
     "sleep-until",
     "wait-until",
-    "wait"
+    "wait",
+    "retry",
+    "debounce",
+    "throttle",
+    "timeout",
+    "promise",
+    "async-utils",
+    "async-utilities",
+    "concurrency",
+    "parallel",
+    "sequential",
+    "race",
+    "typescript",
+    "javascript",
+    "zero-dependencies"
   ],
   "license": "MIT",
   "author": "luxurybird",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luxurybird/await-sleep-until.git"
+  },
+  "bugs": {
+    "url": "https://github.com/luxurybird/await-sleep-until/issues"
+  },
+  "homepage": "https://github.com/luxurybird/await-sleep-until#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "devDependencies": {
     "typescript": "^5.0.0",
     "vitest": "^1.5.0",
@@ -29,6 +58,7 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
   }
 }
