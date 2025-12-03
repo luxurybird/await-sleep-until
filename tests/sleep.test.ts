@@ -290,11 +290,11 @@ describe("debounce", () => {
     const fn = vi.fn().mockReturnValue("result");
     const debounced = debounce(fn, 100);
 
-    debounced();
+    const promise = debounced();
     expect(fn).not.toHaveBeenCalled();
 
-    vi.advanceTimersByTime(100);
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await vi.runAllTimersAsync();
+    await promise;
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
@@ -304,10 +304,10 @@ describe("debounce", () => {
 
     debounced(1);
     debounced(2);
-    debounced(3);
+    const promise3 = debounced(3);
 
-    vi.advanceTimersByTime(100);
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await vi.runAllTimersAsync();
+    await promise3;
     expect(fn).toHaveBeenCalledTimes(1);
     expect(fn).toHaveBeenCalledWith(3);
   });
@@ -317,7 +317,7 @@ describe("debounce", () => {
     const debounced = debounce(fn, 100);
 
     const promise = debounced();
-    vi.advanceTimersByTime(100);
+    await vi.runAllTimersAsync();
     const result = await promise;
     expect(result).toBe("result");
   });
@@ -345,14 +345,15 @@ describe("throttle", () => {
     const fn = vi.fn().mockReturnValue("result");
     const throttled = throttle(fn, 100);
 
-    throttled();
-    throttled();
-    throttled();
-
+    const promise1 = throttled();
+    await promise1;
     expect(fn).toHaveBeenCalledTimes(1);
 
-    vi.advanceTimersByTime(100);
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    throttled();
+    const promise3 = throttled();
+
+    await vi.runAllTimersAsync();
+    await promise3;
     expect(fn).toHaveBeenCalledTimes(2);
   });
 
