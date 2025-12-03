@@ -269,7 +269,27 @@ async function any(promises) {
     if (promises.length === 0) {
         throw new Error('any: at least one promise is required');
     }
-    return Promise.any(promises);
+    // Use native Promise.any if available (ES2021+), otherwise polyfill
+    const PromiseAny = Promise.any;
+    if (typeof PromiseAny === 'function') {
+        return PromiseAny.call(Promise, promises);
+    }
+    // Polyfill for environments without Promise.any
+    const errors = [];
+    return new Promise((resolve, reject) => {
+        let settled = 0;
+        promises.forEach((promise, index) => {
+            Promise.resolve(promise).then((value) => resolve(value), (error) => {
+                errors[index] = error;
+                settled++;
+                if (settled === promises.length) {
+                    const aggregateError = new Error('All promises were rejected');
+                    aggregateError.errors = errors;
+                    reject(aggregateError);
+                }
+            });
+        });
+    });
 }
 /**
  * Create a promise that can be resolved/rejected externally

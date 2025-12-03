@@ -343,7 +343,32 @@ export async function any<T>(promises: Promise<T>[]): Promise<T> {
   if (promises.length === 0) {
     throw new Error('any: at least one promise is required');
   }
-  return Promise.any(promises);
+  
+  // Use native Promise.any if available (ES2021+), otherwise polyfill
+  const PromiseAny = (Promise as any).any;
+  if (typeof PromiseAny === 'function') {
+    return PromiseAny.call(Promise, promises);
+  }
+  
+  // Polyfill for environments without Promise.any
+  const errors: unknown[] = [];
+  return new Promise<T>((resolve, reject) => {
+    let settled = 0;
+    promises.forEach((promise, index) => {
+      Promise.resolve(promise).then(
+        (value) => resolve(value),
+        (error) => {
+          errors[index] = error;
+          settled++;
+          if (settled === promises.length) {
+            const aggregateError = new Error('All promises were rejected');
+            (aggregateError as any).errors = errors;
+            reject(aggregateError);
+          }
+        }
+      );
+    });
+  });
 }
 
 /**
